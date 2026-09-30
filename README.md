@@ -1,6 +1,6 @@
 # MS Barbearia
 
-> Sistema web em PHP/MySQL para cadastro, autenticação e gerenciamento do fluxo de agendamentos de uma barbearia.
+> Sistema web em PHP/MySQL para cadastro, autenticação, disponibilidade e gerenciamento de agendamentos de uma barbearia.
 
 ![PHP](https://img.shields.io/badge/PHP-8%2B-777BB4?logo=php&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-PDO-4479A1?logo=mysql&logoColor=white)
@@ -15,27 +15,34 @@ Centralizar cadastro de clientes e disponibilidade de horários em um fluxo web 
 ```text
 Browser
   │
-  ▼
-PHP pages / handlers
-  ├── autenticação + sessão
-  ├── cadastro
-  ├── disponibilidade
-  ├── agendamento/cancelamento
-  │
-  ▼
-PDO
-  │
-  ▼
+  ├── autenticação / cadastro
+  ├── consulta de horários
+  ├── criação de reserva
+  └── cancelamento
+        │
+        ▼
+PHP + sessão segura + CSRF
+        │
+        ▼
+PDO / prepared statements
+        │
+        ▼
 MySQL
+  ├── usuarios
+  └── agendamentos
 ```
+
+A agenda não depende mais de arquivo JSON: disponibilidade, reservas e cancelamentos utilizam o MySQL como fonte única de verdade.
 
 ## Funcionalidades
 
 - cadastro de clientes;
 - autenticação com sessão;
 - senhas processadas com `password_hash`;
-- consulta de horários;
+- consulta dinâmica de horários diretamente no banco;
 - criação e cancelamento de agendamentos;
+- bloqueio de dupla reserva por barbeiro + horário;
+- reaproveitamento seguro de um slot anteriormente cancelado;
 - integração de contato via WhatsApp;
 - interface responsiva.
 
@@ -55,6 +62,8 @@ DB_PASSWORD=
 
 Copie `.env.example` como referência, mas **não versione credenciais reais**.
 
+A tabela `agendamentos` possui restrição única em `(barbeiro, data_agendamento)`. Isso faz o banco rejeitar duas reservas simultâneas para o mesmo slot, inclusive quando duas requisições chegam quase ao mesmo tempo.
+
 ## Executar localmente
 
 Requisitos: PHP 8+, extensão `pdo_mysql` e MySQL/MariaDB.
@@ -65,59 +74,81 @@ cd MS--Barberaria
 php -S localhost:8080
 ```
 
-Antes de iniciar, crie/configure o banco e aplique `database/schema.sql` quando necessário.
+Crie/configure o banco e aplique [`database/schema.sql`](database/schema.sql) antes do primeiro uso.
 
 ## Docker / produção
 
-O repositório possui `Dockerfile` para tornar o runtime PHP reproduzível e permitir deploy em plataformas de containers. O banco deve ser um serviço persistente separado; não coloque dados MySQL dentro do filesystem efêmero da aplicação.
+O `Dockerfile` utiliza FrankenPHP/PHP 8.4 e instala `pdo_mysql`. O banco deve ser um serviço persistente separado; não grave dados de negócio no filesystem efêmero do container.
 
-## Segurança
+## Segurança aplicada
 
-Já aplicadas ou previstas na arquitetura:
+- `password_hash` / `password_verify`;
+- PDO com prepared statements e emulação desabilitada;
+- credenciais fora do código;
+- sessão regenerada após login e cadastro;
+- cookies de sessão `HttpOnly`, `SameSite=Lax` e `Secure` sob HTTPS;
+- token CSRF em login, cadastro, criação e cancelamento de reservas;
+- validação server-side de serviço, data e horário;
+- mensagem genérica para credenciais inválidas;
+- restrição única no banco para concorrência de reservas;
+- erros internos registrados no servidor sem expor stack trace ao usuário.
 
-- `password_hash` para senhas;
-- PDO/prepared statements para valores fornecidos pelo usuário;
-- credenciais externas ao código;
-- sessão regenerada após autenticação;
-- validações no servidor;
-- `.env` e dados locais fora do Git.
+## Fluxo de concorrência
 
-### Pendências importantes antes de tratar como produção real
+```text
+Usuário escolhe o slot
+        │
+        ▼
+validação server-side
+        │
+        ▼
+transação MySQL
+        │
+        ├─ slot cancelado existente? → reutiliza a linha
+        │
+        └─ slot novo? → INSERT
+                         │
+                         └─ UNIQUE impede corrida / dupla reserva
+```
 
-- proteção CSRF em operações mutáveis;
-- rate limiting / proteção contra brute force no login;
-- cookies de sessão com flags adequadas ao HTTPS;
-- transação + restrição única para impedir duas reservas concorrentes do mesmo horário;
-- centralizar toda persistência da agenda no MySQL;
-- logs estruturados sem dados pessoais sensíveis.
+Se o MySQL retornar violação de unicidade (`1062` / SQLSTATE `23000`), o usuário recebe uma mensagem para escolher outro horário.
 
 ## Qualidade
 
-`.github/workflows/php-quality.yml` valida sintaxe PHP em pushes e pull requests. O objetivo é expandir isso para testes automatizados conforme regras de negócio forem extraídas das páginas.
+`.github/workflows/php-quality.yml` valida a sintaxe de todos os arquivos PHP em cada push e pull request.
 
 ## Estrutura
 
 ```text
-config/                 # configuração de banco
-database/schema.sql     # schema versionado
-css/                    # interface
-img/                    # assets
-agendamento.php         # reserva
-buscar-horarios.php     # disponibilidade
-processa_login.php      # autenticação
-processa_cadastro.php   # cadastro
-Dockerfile              # runtime de produção
+config/
+├── database.php       # conexão PDO
+└── security.php       # sessão e CSRF
+
+database/
+└── schema.sql         # schema versionado
+
+agendamento.php        # criação/listagem de reservas
+buscar-horarios.php    # disponibilidade via MySQL
+cancelar_agendamento.php
+login.php
+processa_login.php
+cadastro.php
+processa_cadastro.php
+Dockerfile
 ```
 
 ## Roadmap
 
-- [ ] persistência integral de agenda no MySQL
-- [ ] proteção CSRF
-- [ ] garantia transacional de horário único
-- [ ] testes automatizados para autenticação/agendamento
+- [x] persistência integral da agenda no MySQL
+- [x] proteção CSRF nas operações principais
+- [x] garantia de horário único no banco
+- [x] cookies de sessão endurecidos
+- [x] validação automática de sintaxe no CI
+- [ ] testes automatizados de integração com MySQL isolado
+- [ ] rate limiting persistente para autenticação
 - [ ] camada de serviço para regras de negócio
-- [ ] observabilidade e tratamento centralizado de erros
-- [ ] otimização dos assets de imagem
+- [ ] observabilidade estruturada
+- [ ] otimização dos assets grandes da galeria
 
 ---
 
