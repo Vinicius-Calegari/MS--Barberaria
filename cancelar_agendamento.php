@@ -1,5 +1,8 @@
 <?php
-session_start();
+require_once __DIR__ . '/config/security.php';
+require_once __DIR__ . '/config/database.php';
+
+startSecureSession();
 
 if (!isset($_SESSION['usuario'])) {
     header('Location: login.php');
@@ -11,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit('Método não permitido.');
 }
 
-require_once 'config/database.php';
+requireValidCsrf();
 
 $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
 if (!$id) {
@@ -32,7 +35,7 @@ try {
     header('Location: agendamento.php?sucesso=Agendamento cancelado com sucesso');
     exit;
 } catch (PDOException $e) {
-    error_log($e->getMessage());
+    error_log('Falha ao cancelar agendamento: ' . $e->getMessage());
     header('Location: agendamento.php?erro=Erro ao cancelar agendamento');
     exit;
 }
