@@ -11,6 +11,7 @@ $servicos = require __DIR__ . '/../config/services.php';
 $pdo = getDBConnection();
 $tz = new DateTimeZone('America/Sao_Paulo');
 $hoje = new DateTimeImmutable('today', $tz);
+$agora = new DateTimeImmutable('now', $tz);
 $dataFiltro = trim((string) ($_GET['data'] ?? $hoje->format('Y-m-d')));
 $statusFiltro = trim((string) ($_GET['status'] ?? ''));
 $busca = trim((string) ($_GET['q'] ?? ''));
@@ -32,10 +33,18 @@ $stmtHoje->execute([$hoje->format('Y-m-d')]);
 $agendaHoje = $stmtHoje->fetchAll();
 $totalHoje = count(array_filter($agendaHoje, fn($a) => $a['status'] !== 'cancelado'));
 $pendentesHoje = count(array_filter($agendaHoje, fn($a) => $a['status'] === 'pendente'));
-$receitaHoje = 0.0;
+$compareceramHoje = count(array_filter($agendaHoje, fn($a) => ($a['comparecimento'] ?? 'aguardando') === 'compareceu'));
+$receitaPrevistaHoje = 0.0;
+$receitaRealizadaHoje = 0.0;
 foreach ($agendaHoje as $item) {
-    if ($item['status'] !== 'cancelado' && isset($servicos[$item['servico']])) {
-        $receitaHoje += (float) $servicos[$item['servico']]['preco'];
+    $valor = $item['preco_cobrado'] !== null
+        ? (float) $item['preco_cobrado']
+        : (isset($servicos[$item['servico']]) ? (float) $servicos[$item['servico']]['preco'] : 0.0);
+    if ($item['status'] !== 'cancelado') {
+        $receitaPrevistaHoje += $valor;
+    }
+    if (($item['comparecimento'] ?? 'aguardando') === 'compareceu') {
+        $receitaRealizadaHoje += $valor;
     }
 }
 
@@ -45,7 +54,7 @@ $stmtMes = $pdo->prepare("SELECT COUNT(*) FROM agendamentos WHERE data_agendamen
 $stmtMes->execute([$inicioMes, $fimMes]);
 $totalMes = (int) $stmtMes->fetchColumn();
 
-$sql = "SELECT a.id, a.servico, a.barbeiro, a.data_agendamento, a.status, a.observacoes,
+$sql = "SELECT a.id, a.servico, a.barbeiro, a.data_agendamento, a.preco_cobrado, a.status, a.comparecimento, a.compareceu_em, a.observacoes,
                u.nome, u.email, u.telefone
         FROM agendamentos a
         JOIN usuarios u ON u.id = a.usuario_id
@@ -76,6 +85,13 @@ $clientes = $pdo->query("SELECT u.id, u.nome, u.email, u.telefone, u.data_cadast
 
 function h(string $value): string { return htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); }
 function statusClass(string $status): string { return in_array($status, ['pendente','confirmado','cancelado'], true) ? $status : 'pendente'; }
+function attendanceClass(string $status): string {
+    return match ($status) {
+        'compareceu' => 'confirmado',
+        'faltou' => 'cancelado',
+        default => 'pendente',
+    };
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -95,6 +111,7 @@ function statusClass(string $status): string { return in_array($status, ['penden
         <nav class="admin-nav">
             <a class="active" href="#dashboard"><i class="fa-solid fa-chart-line"></i>Dashboard</a>
             <a href="#agenda"><i class="fa-solid fa-calendar-days"></i>Agenda</a>
+            <a href="#servicos"><i class="fa-solid fa-tags"></i>Preços</a>
             <a href="#clientes"><i class="fa-solid fa-users"></i>Clientes</a>
             <a href="../index.php" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i>Ver site</a>
         </nav>
@@ -106,7 +123,7 @@ function statusClass(string $status): string { return in_array($status, ['penden
 
     <main class="admin-content" id="dashboard">
         <header class="admin-head">
-            <div><span class="eyebrow">Operação</span><h1>Visão geral</h1><p class="muted" style="margin:4px 0 0">Acompanhe a agenda e tome ações sem sair do painel.</p></div>
+            <div><span class="eyebrow">Operação</span><h1>Visão geral</h1><p class="muted" style="margin:4px 0 0">Agenda, presença, clientes e preços em um único lugar.</p></div>
             <div class="status confirmado"><i class="fa-solid fa-circle" style="font-size:.45rem;margin-right:6px"></i> sistema online</div>
         </header>
 
@@ -115,45 +132,86 @@ function statusClass(string $status): string { return in_array($status, ['penden
 
         <section class="stats-grid">
             <article class="stat-card"><i class="fa-solid fa-calendar-check"></i><span>Atendimentos hoje</span><strong><?= $totalHoje ?></strong></article>
+            <article class="stat-card"><i class="fa-solid fa-user-check"></i><span>Compareceram hoje</span><strong><?= $compareceramHoje ?></strong></article>
             <article class="stat-card"><i class="fa-solid fa-clock"></i><span>Pendentes hoje</span><strong><?= $pendentesHoje ?></strong></article>
-            <article class="stat-card"><i class="fa-solid fa-brazilian-real-sign"></i><span>Receita prevista hoje</span><strong>R$ <?= number_format($receitaHoje, 2, ',', '.') ?></strong></article>
+            <article class="stat-card"><i class="fa-solid fa-brazilian-real-sign"></i><span>Receita prevista</span><strong>R$ <?= number_format($receitaPrevistaHoje, 2, ',', '.') ?></strong></article>
+            <article class="stat-card"><i class="fa-solid fa-sack-dollar"></i><span>Receita realizada</span><strong>R$ <?= number_format($receitaRealizadaHoje, 2, ',', '.') ?></strong></article>
             <article class="stat-card"><i class="fa-solid fa-users"></i><span>Clientes cadastrados</span><strong><?= $totalClientes ?></strong><small class="muted"><?= $totalMes ?> reservas no mês</small></article>
         </section>
 
-        <section class="admin-columns">
-            <div class="panel-ms" id="agenda">
-                <div class="section-head" style="margin-bottom:18px"><div><span class="eyebrow">Agenda</span><h2 class="section-title" style="font-size:2.2rem">Atendimentos</h2></div><span class="muted"><?= count($agenda) ?> resultado(s)</span></div>
-                <form class="admin-filters" method="GET">
-                    <input class="control-ms" type="date" name="data" value="<?= h($dataFiltro) ?>">
-                    <select class="control-ms" name="status">
-                        <option value="">Todos os status</option>
-                        <?php foreach ($statuses as $st): ?><option value="<?= $st ?>" <?= $statusFiltro === $st ? 'selected' : '' ?>><?= ucfirst($st) ?></option><?php endforeach; ?>
-                    </select>
-                    <input class="control-ms" name="q" value="<?= h($busca) ?>" placeholder="Cliente, e-mail, telefone...">
-                    <button class="btn-ms ghost" type="submit"><i class="fa-solid fa-filter"></i>Filtrar</button>
-                </form>
-                <div class="table-wrap">
-                    <table class="table-ms">
-                        <thead><tr><th>Horário</th><th>Cliente</th><th>Serviço</th><th>Status</th><th>Ações</th></tr></thead>
-                        <tbody>
-                        <?php if (!$agenda): ?><tr><td colspan="5" class="muted">Nenhum agendamento encontrado para os filtros selecionados.</td></tr><?php endif; ?>
-                        <?php foreach ($agenda as $item): ?>
-                            <tr>
-                                <td><strong><?= h((new DateTimeImmutable((string)$item['data_agendamento']))->format('H:i')) ?></strong><div class="muted"><?= h((new DateTimeImmutable((string)$item['data_agendamento']))->format('d/m/Y')) ?></div></td>
-                                <td><strong><?= h((string)$item['nome']) ?></strong><div class="muted"><?= h((string)$item['telefone']) ?><br><?= h((string)$item['email']) ?></div></td>
-                                <td><?= h((string)$item['servico']) ?><?php if(isset($servicos[$item['servico']])): ?><div class="muted">R$ <?= number_format((float)$servicos[$item['servico']]['preco'],2,',','.') ?></div><?php endif; ?></td>
-                                <td><span class="status <?= statusClass((string)$item['status']) ?>"><?= h((string)$item['status']) ?></span></td>
-                                <td>
-                                    <div class="row-actions">
+        <section class="panel-ms" id="agenda" style="margin-bottom:18px">
+            <div class="section-head" style="margin-bottom:18px"><div><span class="eyebrow">Agenda</span><h2 class="section-title" style="font-size:2.2rem">Atendimentos</h2></div><span class="muted"><?= count($agenda) ?> resultado(s)</span></div>
+            <form class="admin-filters" method="GET">
+                <input class="control-ms" type="date" name="data" value="<?= h($dataFiltro) ?>">
+                <select class="control-ms" name="status">
+                    <option value="">Todos os status</option>
+                    <?php foreach ($statuses as $st): ?><option value="<?= $st ?>" <?= $statusFiltro === $st ? 'selected' : '' ?>><?= ucfirst($st) ?></option><?php endforeach; ?>
+                </select>
+                <input class="control-ms" name="q" value="<?= h($busca) ?>" placeholder="Cliente, e-mail, telefone...">
+                <button class="btn-ms ghost" type="submit"><i class="fa-solid fa-filter"></i>Filtrar</button>
+            </form>
+            <div class="table-wrap">
+                <table class="table-ms">
+                    <thead><tr><th>Horário</th><th>Cliente</th><th>Serviço</th><th>Status</th><th>Comparecimento</th><th>Ações</th></tr></thead>
+                    <tbody>
+                    <?php if (!$agenda): ?><tr><td colspan="6" class="muted">Nenhum agendamento encontrado para os filtros selecionados.</td></tr><?php endif; ?>
+                    <?php foreach ($agenda as $item): ?>
+                        <?php
+                            $dataItem = new DateTimeImmutable((string)$item['data_agendamento'], $tz);
+                            $podeMarcarPresenca = $dataItem <= $agora && $item['status'] !== 'cancelado';
+                            $valorItem = $item['preco_cobrado'] !== null ? (float)$item['preco_cobrado'] : (isset($servicos[$item['servico']]) ? (float)$servicos[$item['servico']]['preco'] : 0.0);
+                        ?>
+                        <tr>
+                            <td><strong><?= h($dataItem->format('H:i')) ?></strong><div class="muted"><?= h($dataItem->format('d/m/Y')) ?></div></td>
+                            <td><strong><?= h((string)$item['nome']) ?></strong><div class="muted"><?= h((string)$item['telefone']) ?><br><?= h((string)$item['email']) ?></div></td>
+                            <td><?= h((string)$item['servico']) ?><div class="muted">R$ <?= number_format($valorItem,2,',','.') ?></div></td>
+                            <td><span class="status <?= statusClass((string)$item['status']) ?>"><?= h((string)$item['status']) ?></span></td>
+                            <td><span class="status <?= attendanceClass((string)($item['comparecimento'] ?? 'aguardando')) ?>"><?= h((string)($item['comparecimento'] ?? 'aguardando')) ?></span></td>
+                            <td>
+                                <div class="row-actions">
                                     <?php if ($item['status'] !== 'confirmado'): ?><form method="POST" action="action.php"><?= csrfField() ?><input type="hidden" name="id" value="<?= (int)$item['id'] ?>"><input type="hidden" name="acao" value="confirmar"><button class="btn-ms success">Confirmar</button></form><?php endif; ?>
                                     <?php if ($item['status'] !== 'cancelado'): ?><form method="POST" action="action.php" onsubmit="return confirm('Cancelar este agendamento?')"><?= csrfField() ?><input type="hidden" name="id" value="<?= (int)$item['id'] ?>"><input type="hidden" name="acao" value="cancelar"><button class="btn-ms danger">Cancelar</button></form><?php else: ?><form method="POST" action="action.php"><?= csrfField() ?><input type="hidden" name="id" value="<?= (int)$item['id'] ?>"><input type="hidden" name="acao" value="reabrir"><button class="btn-ms ghost">Reabrir</button></form><?php endif; ?>
-                                    </div>
+                                    <?php if ($podeMarcarPresenca && ($item['comparecimento'] ?? 'aguardando') === 'aguardando'): ?>
+                                        <form method="POST" action="action.php"><?= csrfField() ?><input type="hidden" name="id" value="<?= (int)$item['id'] ?>"><input type="hidden" name="acao" value="compareceu"><button class="btn-ms success"><i class="fa-solid fa-check"></i>Veio</button></form>
+                                        <form method="POST" action="action.php"><?= csrfField() ?><input type="hidden" name="id" value="<?= (int)$item['id'] ?>"><input type="hidden" name="acao" value="faltou"><button class="btn-ms danger"><i class="fa-solid fa-user-slash"></i>Faltou</button></form>
+                                    <?php elseif (($item['comparecimento'] ?? 'aguardando') !== 'aguardando'): ?>
+                                        <form method="POST" action="action.php"><?= csrfField() ?><input type="hidden" name="id" value="<?= (int)$item['id'] ?>"><input type="hidden" name="acao" value="limpar_comparecimento"><button class="btn-ms ghost">Corrigir presença</button></form>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="admin-columns">
+            <div class="panel-ms" id="servicos">
+                <div class="section-head" style="margin-bottom:18px"><div><span class="eyebrow">Catálogo</span><h2 class="section-title" style="font-size:2.2rem">Preços dos serviços</h2></div><span class="muted">Altera site e novas reservas</span></div>
+                <div class="table-wrap">
+                    <table class="table-ms">
+                        <thead><tr><th>Serviço</th><th>Duração</th><th>Preço atual</th><th>Novo preço</th></tr></thead>
+                        <tbody>
+                        <?php foreach ($servicos as $nome => $dados): ?>
+                            <tr>
+                                <td><strong><?= h($nome) ?></strong></td>
+                                <td>~<?= (int)$dados['duracao'] ?> min</td>
+                                <td>R$ <?= number_format((float)$dados['preco'],2,',','.') ?></td>
+                                <td>
+                                    <form method="POST" action="service_action.php" class="row-actions">
+                                        <?= csrfField() ?>
+                                        <input type="hidden" name="nome" value="<?= h($nome) ?>">
+                                        <input class="control-ms" style="width:130px;min-height:38px" type="number" step="0.01" min="0" max="9999.99" name="preco" value="<?= number_format((float)$dados['preco'],2,'.','') ?>" required>
+                                        <button class="btn-ms primary" type="submit">Salvar</button>
+                                    </form>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>
+                <p class="muted" style="font-size:.8rem;margin:16px 0 0">Mudanças de preço afetam o catálogo e apenas reservas novas. Reservas antigas mantêm o valor histórico salvo no momento do agendamento.</p>
             </div>
 
             <aside class="panel-ms" id="clientes">
