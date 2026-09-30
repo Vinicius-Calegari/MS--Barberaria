@@ -17,30 +17,30 @@ requireValidCsrf();
 $nome = trim((string) ($_POST['nome'] ?? ''));
 $precoRaw = str_replace(',', '.', trim((string) ($_POST['preco'] ?? '')));
 $preco = filter_var($precoRaw, FILTER_VALIDATE_FLOAT);
+$duracao = filter_input(INPUT_POST, 'duracao', FILTER_VALIDATE_INT);
+$ativo = isset($_POST['ativo']) ? 1 : 0;
 
-if ($nome === '' || $preco === false || $preco < 0 || $preco > 9999.99) {
-    header('Location: index.php?erro=' . rawurlencode('Informe um preço válido.'));
+if ($nome === '' || $preco === false || $preco < 0 || $preco > 9999.99 || !$duracao || $duracao < 15 || $duracao > 480) {
+    header('Location: servicos.php?erro=' . rawurlencode('Dados do serviço inválidos.'));
     exit;
 }
 
 try {
     $pdo = getDBConnection();
-    $stmt = $pdo->prepare('UPDATE servicos SET preco = ? WHERE nome = ? AND ativo = 1');
-    $stmt->execute([(float) $preco, $nome]);
+    $stmt = $pdo->prepare('UPDATE servicos SET preco = ?, duracao = ?, ativo = ? WHERE nome = ?');
+    $stmt->execute([(float)$preco, (int)$duracao, $ativo, $nome]);
 
-    if ($stmt->rowCount() === 0) {
-        $existe = $pdo->prepare('SELECT COUNT(*) FROM servicos WHERE nome = ? AND ativo = 1');
-        $existe->execute([$nome]);
-        if ((int) $existe->fetchColumn() === 0) {
-            header('Location: index.php?erro=' . rawurlencode('Serviço não encontrado.'));
-            exit;
-        }
+    $check = $pdo->prepare('SELECT COUNT(*) FROM servicos WHERE nome = ?');
+    $check->execute([$nome]);
+    if ((int)$check->fetchColumn() === 0) {
+        header('Location: servicos.php?erro=' . rawurlencode('Serviço não encontrado.'));
+        exit;
     }
 
-    header('Location: index.php?sucesso=' . rawurlencode('Preço de ' . $nome . ' atualizado para R$ ' . number_format((float)$preco, 2, ',', '.') . '.'));
+    header('Location: servicos.php?sucesso=' . rawurlencode('Serviço atualizado. O novo valor já vale para novas reservas.'));
     exit;
 } catch (PDOException $e) {
-    error_log('Falha ao atualizar preço: ' . $e->getMessage());
-    header('Location: index.php?erro=' . rawurlencode('Não foi possível atualizar o preço.'));
+    error_log('Falha ao atualizar serviço: ' . $e->getMessage());
+    header('Location: servicos.php?erro=' . rawurlencode('Não foi possível atualizar o serviço.'));
     exit;
 }
