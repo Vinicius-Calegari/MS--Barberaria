@@ -26,7 +26,7 @@ try {
     $pdo = getDBConnection();
 
     if (in_array($acao, ['compareceu', 'faltou', 'limpar_comparecimento'], true)) {
-        $consulta = $pdo->prepare('SELECT data_agendamento FROM agendamentos WHERE id = ? LIMIT 1');
+        $consulta = $pdo->prepare('SELECT data_agendamento, status FROM agendamentos WHERE id = ? LIMIT 1');
         $consulta->execute([$id]);
         $agendamento = $consulta->fetch();
         if (!$agendamento) {
@@ -35,6 +35,10 @@ try {
         }
 
         if ($acao !== 'limpar_comparecimento') {
+            if ((string) $agendamento['status'] === 'cancelado') {
+                header('Location: index.php?erro=' . rawurlencode('Agendamento cancelado não pode registrar comparecimento.'));
+                exit;
+            }
             $tz = new DateTimeZone('America/Sao_Paulo');
             $horario = new DateTimeImmutable((string) $agendamento['data_agendamento'], $tz);
             $agora = new DateTimeImmutable('now', $tz);
