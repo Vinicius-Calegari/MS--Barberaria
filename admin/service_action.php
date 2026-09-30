@@ -17,27 +17,35 @@ requireValidCsrf();
 $nome = trim((string) ($_POST['nome'] ?? ''));
 $precoRaw = str_replace(',', '.', trim((string) ($_POST['preco'] ?? '')));
 $preco = filter_var($precoRaw, FILTER_VALIDATE_FLOAT);
-$duracao = filter_input(INPUT_POST, 'duracao', FILTER_VALIDATE_INT);
-$ativo = isset($_POST['ativo']) ? 1 : 0;
 
-if ($nome === '' || $preco === false || $preco < 0 || $preco > 9999.99 || !$duracao || $duracao < 15 || $duracao > 480) {
-    header('Location: servicos.php?erro=' . rawurlencode('Dados do serviço inválidos.'));
+if ($nome === '' || $preco === false || $preco < 0 || $preco > 9999.99) {
+    header('Location: servicos.php?erro=' . rawurlencode('Informe um preço válido.'));
     exit;
 }
 
 try {
     $pdo = getDBConnection();
-    $stmt = $pdo->prepare('UPDATE servicos SET preco = ?, duracao = ?, ativo = ? WHERE nome = ?');
-    $stmt->execute([(float)$preco, (int)$duracao, $ativo, $nome]);
-
-    $check = $pdo->prepare('SELECT COUNT(*) FROM servicos WHERE nome = ?');
-    $check->execute([$nome]);
-    if ((int)$check->fetchColumn() === 0) {
+    $atual = $pdo->prepare('SELECT duracao, ativo FROM servicos WHERE nome = ? LIMIT 1');
+    $atual->execute([$nome]);
+    $existente = $atual->fetch();
+    if (!$existente) {
         header('Location: servicos.php?erro=' . rawurlencode('Serviço não encontrado.'));
         exit;
     }
 
-    header('Location: servicos.php?sucesso=' . rawurlencode('Serviço atualizado. O novo valor já vale para novas reservas.'));
+    $duracaoRecebida = filter_input(INPUT_POST, 'duracao', FILTER_VALIDATE_INT);
+    $duracao = $duracaoRecebida && $duracaoRecebida >= 15 && $duracaoRecebida <= 480
+        ? (int) $duracaoRecebida
+        : (int) $existente['duracao'];
+    $ativo = array_key_exists('duracao', $_POST)
+        ? (isset($_POST['ativo']) ? 1 : 0)
+        : (int) $existente['ativo'];
+
+    $stmt = $pdo->prepare('UPDATE servicos SET preco = ?, duracao = ?, ativo = ? WHERE nome = ?');
+    $stmt->execute([(float)$preco, $duracao, $ativo, $nome]);
+
+    $destino = array_key_exists('duracao', $_POST) ? 'servicos.php' : 'index.php#servicos';
+    header('Location: ' . $destino . '?sucesso=' . rawurlencode('Serviço atualizado. O novo valor já vale para novas reservas.'));
     exit;
 } catch (PDOException $e) {
     error_log('Falha ao atualizar serviço: ' . $e->getMessage());
