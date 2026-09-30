@@ -41,13 +41,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $erro = 'Escolha um horário futuro.';
     } else {
         $dataSql = $date->format('Y-m-d H:i:s');
+        $precoVigente = (float) $servicos[$servico]['preco'];
         try {
             $pdo->beginTransaction();
-            $reutilizar = $pdo->prepare("UPDATE agendamentos SET usuario_id=?, servico=?, status='pendente', observacoes=NULL WHERE barbeiro=? AND data_agendamento=? AND status='cancelado'");
-            $reutilizar->execute([(int)$_SESSION['usuario']['id'], $servico, $barbeiro, $dataSql]);
+            $reutilizar = $pdo->prepare("UPDATE agendamentos SET usuario_id=?, servico=?, preco_cobrado=?, status='pendente', comparecimento='aguardando', compareceu_em=NULL, observacoes=NULL WHERE barbeiro=? AND data_agendamento=? AND status='cancelado'");
+            $reutilizar->execute([(int)$_SESSION['usuario']['id'], $servico, $precoVigente, $barbeiro, $dataSql]);
             if ($reutilizar->rowCount() === 0) {
-                $inserir = $pdo->prepare("INSERT INTO agendamentos (usuario_id, servico, barbeiro, data_agendamento, status) VALUES (?, ?, ?, ?, 'pendente')");
-                $inserir->execute([(int)$_SESSION['usuario']['id'], $servico, $barbeiro, $dataSql]);
+                $inserir = $pdo->prepare("INSERT INTO agendamentos (usuario_id, servico, barbeiro, data_agendamento, preco_cobrado, status, comparecimento) VALUES (?, ?, ?, ?, ?, 'pendente', 'aguardando')");
+                $inserir->execute([(int)$_SESSION['usuario']['id'], $servico, $barbeiro, $dataSql, $precoVigente]);
             }
             $pdo->commit();
             header('Location: agendamento.php?sucesso=' . rawurlencode('Horário reservado. Aguarde a confirmação da barbearia.'));
@@ -65,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$stmt = $pdo->prepare("SELECT id, servico, barbeiro, data_agendamento, status FROM agendamentos WHERE usuario_id=? AND data_agendamento>=NOW() AND status<>'cancelado' ORDER BY data_agendamento ASC LIMIT 20");
+$stmt = $pdo->prepare("SELECT id, servico, barbeiro, data_agendamento, preco_cobrado, status, comparecimento FROM agendamentos WHERE usuario_id=? AND data_agendamento>=NOW() AND status<>'cancelado' ORDER BY data_agendamento ASC LIMIT 20");
 $stmt->execute([(int)$_SESSION['usuario']['id']]);
 $meusAgendamentos = $stmt->fetchAll();
 $proximo = $meusAgendamentos[0] ?? null;
@@ -135,7 +136,7 @@ $proximo = $meusAgendamentos[0] ?? null;
                     <div class="appointment-list">
                     <?php foreach ($meusAgendamentos as $item): ?>
                         <article class="appointment">
-                            <div class="appointment-head"><div><strong><?= h((string)$item['servico']) ?></strong><span class="muted"><?= h((new DateTimeImmutable((string)$item['data_agendamento']))->format('d/m/Y · H:i')) ?></span></div><span class="status <?= h((string)$item['status']) ?>"><?= h((string)$item['status']) ?></span></div>
+                            <div class="appointment-head"><div><strong><?= h((string)$item['servico']) ?></strong><span class="muted"><?= h((new DateTimeImmutable((string)$item['data_agendamento']))->format('d/m/Y · H:i')) ?> · R$ <?= number_format((float)$item['preco_cobrado'],2,',','.') ?></span></div><span class="status <?= h((string)$item['status']) ?>"><?= h((string)$item['status']) ?></span></div>
                             <form action="cancelar_agendamento.php" method="POST" style="margin-top:13px" onsubmit="return confirm('Cancelar este agendamento?')"><?= csrfField() ?><input type="hidden" name="id" value="<?= (int)$item['id'] ?>"><button class="btn-ms danger" type="submit"><i class="fa-regular fa-circle-xmark"></i> Cancelar</button></form>
                         </article>
                     <?php endforeach; ?>
