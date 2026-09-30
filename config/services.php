@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-return [
+$defaults = [
     'Degradê' => [
         'preco' => 50.00,
         'duracao' => 60,
@@ -53,3 +53,29 @@ return [
         'icone' => 'fa-star',
     ],
 ];
+
+try {
+    require_once __DIR__ . '/database.php';
+    $pdo = getDBConnection();
+    $rows = $pdo->query('SELECT nome, preco, duracao, ativo FROM servicos WHERE ativo = 1 ORDER BY nome')->fetchAll();
+
+    $ativos = [];
+    foreach ($rows as $row) {
+        $nome = (string) $row['nome'];
+        if (!isset($defaults[$nome])) {
+            continue;
+        }
+        $item = $defaults[$nome];
+        $item['preco'] = (float) $row['preco'];
+        $item['duracao'] = (int) $row['duracao'];
+        $ativos[$nome] = $item;
+    }
+
+    if ($ativos !== []) {
+        return $ativos;
+    }
+} catch (Throwable $e) {
+    error_log('Falha ao carregar catálogo do banco: ' . $e->getMessage());
+}
+
+return $defaults;
