@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS agendamentos (
     status ENUM('pendente','confirmado','cancelado') DEFAULT 'pendente',
     CONSTRAINT fk_agendamento_usuario
         FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    CONSTRAINT uq_agendamento_barbeiro_horario UNIQUE (barbeiro, data_agendamento),
     INDEX idx_agendamentos_usuario_data (usuario_id, data_agendamento),
-    INDEX idx_agendamentos_status (status)
+    INDEX idx_agendamentos_status (status),
+    INDEX idx_agendamentos_data (data_agendamento)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
