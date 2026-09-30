@@ -6,5 +6,9 @@
 :8080 {
     root * /app
     encode zstd br gzip
+
+    @health path /health
+    rewrite @health /health.php
+
     php_server
 }
