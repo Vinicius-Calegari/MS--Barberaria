@@ -1,39 +1,57 @@
 # MS Barbearia
 
-Sistema web para gerenciamento de uma barbearia, desenvolvido com PHP e MySQL. O projeto reúne fluxo de cadastro e autenticação de clientes, agendamento de horários e operações relacionadas ao atendimento.
+Sistema web de atendimento e agendamento desenvolvido em PHP, com autenticação de clientes, disponibilidade de horários e integração com WhatsApp.
+
+![PHP](https://img.shields.io/badge/PHP-8%2B-777BB4?logo=php&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-Database-4479A1?logo=mysql&logoColor=white)
+![CI](https://img.shields.io/github/actions/workflow/status/Vinicius-Calegari/MS--Barberaria/php-quality.yml?label=PHP%20syntax)
 
 ## Funcionalidades
 
-- Cadastro e login de usuários
-- Agendamento de serviços
-- Consulta de horários disponíveis
-- Cancelamento de agendamentos
-- Persistência de dados em MySQL
-- Interface web responsiva
+- cadastro e autenticação de clientes
+- senhas armazenadas com `password_hash`
+- sessões autenticadas
+- agendamento e consulta de horários
+- cancelamento vinculado ao usuário autenticado
+- interface responsiva e integração com WhatsApp
 
-## Tecnologias
+## Segurança
 
-- PHP
-- MySQL
-- HTML
-- CSS
-- JavaScript
+A conexão PDO usa prepared statements nativos e credenciais externas ao código. Configure o ambiente com base em `.env.example`:
 
-## Estrutura
+```text
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=ms_barbearia
+DB_USER=root
+DB_PASSWORD=
+```
 
-O projeto mantém as páginas e regras principais em PHP, com diretórios separados para configuração, estilos, imagens e dados da aplicação.
+O login regenera o ID da sessão após autenticação e o cadastro aplica validação no servidor. Logs, arquivos `.env` e dados locais de agendamento são ignorados pelo Git.
 
-## Executando localmente
+> Dados pessoais de clientes nunca devem ser versionados. Se dados reais já apareceram no histórico do repositório, o commit atual não apaga cópias antigas do histórico.
 
-1. Clone o repositório.
-2. Configure um servidor local com PHP e MySQL (como XAMPP ou equivalente).
-3. Configure a conexão com o banco no diretório `config`.
-4. Importe a estrutura de banco necessária.
-5. Abra a aplicação pelo servidor local.
+## Desenvolvimento
 
-## Objetivo
+Requer PHP 8+, PDO MySQL e MySQL/MariaDB. O schema básico é criado automaticamente pela aplicação quando o banco configurado já existe.
 
-Este projeto foi desenvolvido para aplicar conceitos de desenvolvimento web full stack em um cenário real de negócio, incluindo autenticação, persistência de dados e gerenciamento de agendamentos.
+```text
+config/database.php  conexão e schema
+processa_login.php   autenticação
+processa_cadastro.php cadastro
+agendamento.php      fluxo de reserva
+buscar-horarios.php  disponibilidade
+css/                  estilos
+img/                  assets
+```
+
+## Qualidade
+
+O workflow de CI valida a sintaxe de todos os arquivos PHP em pushes e pull requests.
+
+## Evolução recomendada
+
+O projeto ainda mantém parte da disponibilidade em arquivo local. Para uma versão de produção, a agenda deve ficar integralmente no MySQL com transação/índice único para impedir reservas concorrentes do mesmo horário, além de CSRF e rate limiting nos formulários de autenticação.
 
 ---
 
