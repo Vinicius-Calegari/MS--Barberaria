@@ -1,38 +1,38 @@
 <?php
 session_start();
+
 if (!isset($_SESSION['usuario'])) {
-    header("Location: login.php");
-    exit();
+    header('Location: login.php');
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    exit('Método não permitido.');
 }
 
 require_once 'config/database.php';
 
-if (isset($_GET['id'])) {
-    $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
-    
-    try {
-        $pdo = getDBConnection();
-        
-        // Verificar se o agendamento pertence ao usuário
-        $stmt = $pdo->prepare("SELECT usuario_id FROM agendamentos WHERE id = ?");
-        $stmt->execute([$id]);
-        $agendamento = $stmt->fetch();
-        
-        if ($agendamento && $agendamento['usuario_id'] == $_SESSION['usuario']['id']) {
-            $stmt = $pdo->prepare("UPDATE agendamentos SET status = 'cancelado' WHERE id = ?");
-            $stmt->execute([$id]);
-            header("Location: agendamento.php?sucesso=Agendamento cancelado com sucesso");
-            exit();
-        } else {
-            header("Location: agendamento.php?erro=Agendamento não encontrado");
-            exit();
-        }
-    } catch (PDOException $e) {
-        header("Location: agendamento.php?erro=Erro ao cancelar agendamento");
-        exit();
-    }
-} else {
-    header("Location: agendamento.php");
-    exit();
+$id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+if (!$id) {
+    header('Location: agendamento.php?erro=Agendamento inválido');
+    exit;
 }
-?>
+
+try {
+    $pdo = getDBConnection();
+    $stmt = $pdo->prepare("UPDATE agendamentos SET status = 'cancelado' WHERE id = ? AND usuario_id = ? AND status <> 'cancelado'");
+    $stmt->execute([$id, (int) $_SESSION['usuario']['id']]);
+
+    if ($stmt->rowCount() !== 1) {
+        header('Location: agendamento.php?erro=Agendamento não encontrado');
+        exit;
+    }
+
+    header('Location: agendamento.php?sucesso=Agendamento cancelado com sucesso');
+    exit;
+} catch (PDOException $e) {
+    error_log($e->getMessage());
+    header('Location: agendamento.php?erro=Erro ao cancelar agendamento');
+    exit;
+}
