@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/_auth.php';
+require_once __DIR__ . '/_ui.php';
 require_once __DIR__ . '/../config/database.php';
 
 requireAdmin();
@@ -22,20 +23,11 @@ function h(string $value): string { return htmlspecialchars($value, ENT_QUOTES, 
     <title>Serviços e preços | MS Gestão</title>
     <link rel="icon" href="../img/Logo.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="../css/rework.css">
+    <link rel="stylesheet" href="../css/rework.css"><link rel="stylesheet" href="../css/premium.css">
 </head>
-<body>
+<body class="admin-premium">
 <div class="admin-layout">
-    <aside class="admin-sidebar">
-        <div class="admin-brand"><img src="../img/Logo.png" alt="MS"><div><strong>MS GESTÃO</strong><div class="muted" style="font-size:.7rem">Painel administrativo</div></div></div>
-        <nav class="admin-nav">
-            <a href="index.php"><i class="fa-solid fa-chart-line"></i>Dashboard</a>
-            <a href="index.php#agenda"><i class="fa-solid fa-calendar-days"></i>Agenda</a>
-            <a class="active" href="servicos.php"><i class="fa-solid fa-tags"></i>Preços</a>
-            <a href="../index.php" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i>Ver site</a>
-        </nav>
-        <form action="logout.php" method="POST" style="margin-top:28px"><?= csrfField() ?><button type="submit" class="btn-ms ghost" style="width:100%"><i class="fa-solid fa-right-from-bracket"></i>Sair</button></form>
-    </aside>
+    <?php adminSidebar('servicos'); ?>
 
     <main class="admin-content">
         <header class="admin-head">
@@ -46,6 +38,16 @@ function h(string $value): string { return htmlspecialchars($value, ENT_QUOTES, 
         <?php if ($erro !== ''): ?><div class="alert-ms error"><?= h($erro) ?></div><?php endif; ?>
         <?php if ($sucesso !== ''): ?><div class="alert-ms success"><?= h($sucesso) ?></div><?php endif; ?>
 
+        <section class="panel-ms">
+           <div class="section-head"><div><span class="eyebrow">Novos cortes</span><h2 class="section-title">ADICIONAR SERVIÇO</h2></div><p>O serviço fica disponível na página de agendamento da MS Barbearia.</p></div>
+           <form class="admin-product-form" method="POST" action="service_action.php">
+             <?= csrfField() ?><input type="hidden" name="acao" value="criar">
+             <div class="field-ms"><label>Nome do serviço</label><input class="control-ms" name="nome" maxlength="50" required placeholder="Ex.: Corte infantil"></div>
+             <div class="field-ms"><label>Preço (R$)</label><input class="control-ms" type="number" name="preco" min="0" max="9999.99" step=".01" required></div>
+             <div class="field-ms"><label>Duração (minutos)</label><input class="control-ms" type="number" name="duracao" min="15" max="480" step="5" value="60" required></div>
+             <button class="btn-ms primary form-wide" type="submit">Criar serviço <i class="fa-solid fa-plus"></i></button>
+           </form>
+        </section>
         <section class="panel-ms">
             <div class="section-head" style="margin-bottom:20px">
                 <div><span class="eyebrow">Tabela de preços</span><h2 class="section-title" style="font-size:2.3rem">Edite sem alterar código</h2></div>

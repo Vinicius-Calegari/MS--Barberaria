@@ -81,6 +81,7 @@ $proximo = $meusAgendamentos[0] ?? null;
     <link rel="icon" href="img/Logo.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="css/rework.css">
+    <link rel="stylesheet" href="css/premium.css">
 </head>
 <body class="dashboard-page">
 <header class="dash-top">
@@ -150,5 +151,6 @@ $proximo = $meusAgendamentos[0] ?? null;
 const dataInput=document.getElementById('data');const horarioSelect=document.getElementById('horario');
 dataInput.addEventListener('change',async()=>{const data=dataInput.value;horarioSelect.disabled=true;horarioSelect.innerHTML='<option>Consultando...</option>';if(!data){horarioSelect.innerHTML='<option value="">Selecione a data primeiro</option>';return;}try{const r=await fetch(`buscar-horarios.php?data=${encodeURIComponent(data)}`,{headers:{'X-Requested-With':'XMLHttpRequest'}});horarioSelect.innerHTML=await r.text();horarioSelect.disabled=!r.ok;}catch(e){horarioSelect.innerHTML='<option value="">Erro ao consultar horários</option>';}});
 </script>
+<script src="js/premium.js" defer></script>
 </body>
 </html>

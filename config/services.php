@@ -61,19 +61,17 @@ try {
 
     $ativos = [];
     foreach ($rows as $row) {
-        $nome = (string) $row['nome'];
-        if (!isset($defaults[$nome])) {
-            continue;
-        }
-        $item = $defaults[$nome];
-        $item['preco'] = (float) $row['preco'];
-        $item['duracao'] = (int) $row['duracao'];
+        $nome = (string)$row['nome'];
+        $item = $defaults[$nome] ?? [
+            'descricao' => 'Experiência personalizada da MS Barbearia.',
+            'imagem' => 'img/Corte.jpg',
+            'icone' => 'fa-scissors',
+        ];
+        $item['preco'] = (float)$row['preco'];
+        $item['duracao'] = (int)$row['duracao'];
         $ativos[$nome] = $item;
     }
-
-    if ($ativos !== []) {
-        return $ativos;
-    }
+    return $ativos;
 } catch (Throwable $e) {
     error_log('Falha ao carregar catálogo do banco: ' . $e->getMessage());
 }

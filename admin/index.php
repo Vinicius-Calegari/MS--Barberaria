@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/_auth.php';
+require_once __DIR__ . '/_ui.php';
 require_once __DIR__ . '/../config/database.php';
 
 requireAdmin();
@@ -83,6 +84,9 @@ $clientes = $pdo->query("SELECT u.id, u.nome, u.email, u.telefone, u.data_cadast
     ORDER BY u.data_cadastro DESC
     LIMIT 10")->fetchAll();
 
+$commerceCounts=msShopCounts($pdo);
+$monthReport=msReport($pdo,new DateTimeImmutable($inicioMes,$tz),new DateTimeImmutable($fimMes,$tz));
+
 function h(string $value): string { return htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); }
 function statusClass(string $status): string { return in_array($status, ['pendente','confirmado','cancelado'], true) ? $status : 'pendente'; }
 function attendanceClass(string $status): string {
@@ -102,28 +106,15 @@ function attendanceClass(string $status): string {
     <title>Dashboard | MS Barbearia</title>
     <link rel="icon" href="../img/Logo.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="../css/rework.css">
+    <link rel="stylesheet" href="../css/rework.css"><link rel="stylesheet" href="../css/premium.css">
 </head>
-<body>
+<body class="admin-premium">
 <div class="admin-layout">
-    <aside class="admin-sidebar">
-        <div class="admin-brand"><img src="../img/Logo.png" alt="MS"><div><strong>MS GESTÃO</strong><div class="muted" style="font-size:.7rem">Painel administrativo</div></div></div>
-        <nav class="admin-nav">
-            <a class="active" href="#dashboard"><i class="fa-solid fa-chart-line"></i>Dashboard</a>
-            <a href="#agenda"><i class="fa-solid fa-calendar-days"></i>Agenda</a>
-            <a href="#servicos"><i class="fa-solid fa-tags"></i>Preços</a>
-            <a href="#clientes"><i class="fa-solid fa-users"></i>Clientes</a>
-            <a href="../index.php" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i>Ver site</a>
-        </nav>
-        <form action="logout.php" method="POST" style="margin-top:28px">
-            <?= csrfField() ?>
-            <button type="submit" class="btn-ms ghost" style="width:100%"><i class="fa-solid fa-right-from-bracket"></i>Sair</button>
-        </form>
-    </aside>
+    <?php adminSidebar('dashboard'); ?>
 
     <main class="admin-content" id="dashboard">
         <header class="admin-head">
-            <div><span class="eyebrow">Operação</span><h1>Visão geral</h1><p class="muted" style="margin:4px 0 0">Agenda, presença, clientes e preços em um único lugar.</p></div>
+            <div><span class="eyebrow">Operação</span><h1>Visão geral</h1><p class="muted" style="margin:4px 0 0">Agenda, loja, financeiro e atendimento em um único lugar.</p></div>
             <div class="status confirmado"><i class="fa-solid fa-circle" style="font-size:.45rem;margin-right:6px"></i> sistema online</div>
         </header>
 
@@ -139,6 +130,16 @@ function attendanceClass(string $status): string {
             <article class="stat-card"><i class="fa-solid fa-users"></i><span>Clientes cadastrados</span><strong><?= $totalClientes ?></strong><small class="muted"><?= $totalMes ?> reservas no mês</small></article>
         </section>
 
+        <section class="admin-mini-stats" aria-label="Resultados comerciais">
+          <article class="stat-card"><i class="fa-solid fa-bag-shopping"></i><span>Vendas de produtos no mês</span><strong><?= msMoney($monthReport['produtos']) ?></strong></article>
+          <article class="stat-card"><i class="fa-solid fa-receipt"></i><span>Despesas no mês</span><strong><?= msMoney($monthReport['despesas']) ?></strong></article>
+          <article class="stat-card"><i class="fa-solid fa-coins"></i><span>Resultado operacional estimado</span><strong><?= msMoney($monthReport['resultado']) ?></strong></article>
+        </section>
+        <section class="dashboard-links">
+          <a class="dashboard-link" href="produtos.php"><i class="fa-solid fa-shirt"></i><span><strong>Produtos & estoque</strong><small><?= $commerceCounts['produtos'] ?> produto(s) · <?= $commerceCounts['estoque_baixo'] ?> com baixo estoque</small></span><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+          <a class="dashboard-link" href="vendas.php"><i class="fa-solid fa-bag-shopping"></i><span><strong>Pedidos e vendas</strong><small><?= $commerceCounts['pedidos_pendentes'] ?> aguardando confirmação</small></span><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+          <a class="dashboard-link" href="financeiro.php"><i class="fa-solid fa-chart-line"></i><span><strong>Gestão financeira</strong><small>Receita, despesas e resultado</small></span><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+        </section>
         <section class="panel-ms" id="agenda" style="margin-bottom:18px">
             <div class="section-head" style="margin-bottom:18px"><div><span class="eyebrow">Agenda</span><h2 class="section-title" style="font-size:2.2rem">Atendimentos</h2></div><span class="muted"><?= count($agenda) ?> resultado(s)</span></div>
             <form class="admin-filters" method="GET">

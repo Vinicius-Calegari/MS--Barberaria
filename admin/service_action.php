@@ -1,54 +1,37 @@
 <?php
-
 declare(strict_types=1);
-
-require_once __DIR__ . '/_auth.php';
-require_once __DIR__ . '/../config/database.php';
-
+require_once __DIR__.'/_auth.php';
+require_once __DIR__.'/../config/database.php';
+require_once __DIR__.'/../config/commerce.php';
 requireAdmin();
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    exit('Método não permitido.');
-}
-
+if($_SERVER['REQUEST_METHOD']!=='POST'){http_response_code(405);exit;}
 requireValidCsrf();
-
-$nome = trim((string) ($_POST['nome'] ?? ''));
-$precoRaw = str_replace(',', '.', trim((string) ($_POST['preco'] ?? '')));
-$preco = filter_var($precoRaw, FILTER_VALIDATE_FLOAT);
-
-if ($nome === '' || $preco === false || $preco < 0 || $preco > 9999.99) {
-    header('Location: servicos.php?erro=' . rawurlencode('Informe um preço válido.'));
-    exit;
-}
-
+$acao=(string)($_POST['acao']??'atualizar');
+$nome=trim((string)($_POST['nome']??''));
+$preco=msValidatedMoney($_POST['preco']??null);
+if($nome===''||mb_strlen($nome)>50||$preco===null||(float)$preco>9999.99)msRedirect('servicos.php','erro','Nome ou preço inválido.');
 try {
-    $pdo = getDBConnection();
-    $atual = $pdo->prepare('SELECT duracao, ativo FROM servicos WHERE nome = ? LIMIT 1');
-    $atual->execute([$nome]);
-    $existente = $atual->fetch();
-    if (!$existente) {
-        header('Location: servicos.php?erro=' . rawurlencode('Serviço não encontrado.'));
-        exit;
-    }
-
-    $duracaoRecebida = filter_input(INPUT_POST, 'duracao', FILTER_VALIDATE_INT);
-    $duracao = $duracaoRecebida && $duracaoRecebida >= 15 && $duracaoRecebida <= 480
-        ? (int) $duracaoRecebida
-        : (int) $existente['duracao'];
-    $ativo = array_key_exists('duracao', $_POST)
-        ? (isset($_POST['ativo']) ? 1 : 0)
-        : (int) $existente['ativo'];
-
-    $stmt = $pdo->prepare('UPDATE servicos SET preco = ?, duracao = ?, ativo = ? WHERE nome = ?');
-    $stmt->execute([(float)$preco, $duracao, $ativo, $nome]);
-
-    $destino = array_key_exists('duracao', $_POST) ? 'servicos.php' : 'index.php#servicos';
-    header('Location: ' . $destino . '?sucesso=' . rawurlencode('Serviço atualizado. O novo valor já vale para novas reservas.'));
-    exit;
-} catch (PDOException $e) {
-    error_log('Falha ao atualizar serviço: ' . $e->getMessage());
-    header('Location: servicos.php?erro=' . rawurlencode('Não foi possível atualizar o serviço.'));
-    exit;
+ $pdo=getDBConnection();
+ if($acao==='criar'){
+  $dur=filter_input(INPUT_POST,'duracao',FILTER_VALIDATE_INT);
+  if(!$dur||$dur<15||$dur>480)msRedirect('servicos.php','erro','Duração inválida.');
+  $st=$pdo->prepare('INSERT INTO servicos(nome,preco,duracao,ativo) VALUES (?,?,?,1)');
+  $st->execute([$nome,$preco,$dur]);
+  msRedirect('servicos.php','sucesso','Novo serviço criado e disponível no site.');
+ }
+ if($acao!=='atualizar')msRedirect('servicos.php','erro','Ação inválida.');
+ $st=$pdo->prepare('SELECT duracao,ativo FROM servicos WHERE nome=? LIMIT 1');
+ $st->execute([$nome]);$original=$st->fetch();
+ if(!$original)msRedirect('servicos.php','erro','Serviço não encontrado.');
+ $dur=filter_input(INPUT_POST,'duracao',FILTER_VALIDATE_INT);
+ $duracao=$dur&&$dur>=15&&$dur<=480?(int)$dur:(int)$original['duracao'];
+ $ativo=array_key_exists('duracao',$_POST)?(isset($_POST['ativo'])?1:0):(int)$original['ativo'];
+ $st=$pdo->prepare('UPDATE servicos SET preco=?,duracao=?,ativo=? WHERE nome=?');
+ $st->execute([$preco,$duracao,$ativo,$nome]);
+ $destino=array_key_exists('duracao',$_POST)?'servicos.php':'index.php#servicos';
+ msRedirect($destino,'sucesso','Serviço atualizado. O novo preço vale apenas para novas reservas.');
+}catch(PDOException $e){
+ error_log('Erro serviço MS: '.$e->getMessage());
+ $msg=(int)($e->errorInfo[1]??0)===1062?'Já existe um serviço com esse nome.':'Não foi possível salvar o serviço.';
+ msRedirect('servicos.php','erro',$msg);
 }

@@ -20,6 +20,7 @@ $erro = trim((string) ($_GET['erro'] ?? ''));
     <link rel="icon" href="img/Logo.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="css/rework.css">
+    <link rel="stylesheet" href="css/premium.css">
 </head>
 <body>
 <div class="auth-page">
@@ -44,5 +45,6 @@ $erro = trim((string) ($_GET['erro'] ?? ''));
         </div>
     </main>
 </div>
+<script src="js/premium.js" defer></script>
 </body>
 </html>
