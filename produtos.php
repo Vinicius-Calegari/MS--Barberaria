@@ -24,8 +24,8 @@ $stmt=$pdo->prepare($sql);$stmt->execute($args);$produtos=$stmt->fetchAll();
 <div class="ambient-orb orb-one" aria-hidden="true"></div>
 <header class="ms-nav"><div class="container-ms ms-nav-inner">
 <a class="ms-brand" href="index.php"><img src="img/Logo.png" alt="Logo MS"><div><strong>MS BARBEARIA</strong><span>MS Store · Ferros MG</span></div></a>
-<nav class="ms-links" aria-label="Navegação"><a href="index.php">Início</a><a href="index.php#servicos">Serviços</a><a class="nav-current" href="produtos.php">Loja</a><a href="index.php#contato">Contato</a></nav>
-<div class="nav-actions"><button type="button" class="btn-ms ghost store-cart-button" data-open-cart><i class="fa-solid fa-bag-shopping"></i> Sacola <span class="cart-count" data-cart-count>0</span></button><a class="btn-ms primary" href="<?= isset($_SESSION['usuario']['id'])?'agendamento.php':'login.php' ?>">Agendar <i class="fa-solid fa-arrow-up-right-from-square"></i></a></div>
+<button type="button" class="nav-mobile-toggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="ms-site-nav"><i class="fa-solid fa-bars"></i></button><nav class="ms-links" id="ms-site-nav" aria-label="Navegação"><a href="index.php">Início</a><a href="index.php#servicos">Serviços</a><a class="nav-current" href="produtos.php">Loja</a><a href="index.php#contato">Contato</a></nav>
+<div class="nav-actions"><button type="button" class="btn-ms ghost store-cart-button" data-open-cart aria-label="Abrir sacola de compras"><i class="fa-solid fa-bag-shopping"></i> Sacola <span class="cart-count" data-cart-count>0</span></button><a class="btn-ms primary" href="<?= isset($_SESSION['usuario']['id'])?'agendamento.php':'login.php' ?>">Agendar <i class="fa-solid fa-arrow-up-right-from-square"></i></a></div>
 </div></header>
 <main>
 <section class="store-hero"><div class="container-ms store-hero-grid">
