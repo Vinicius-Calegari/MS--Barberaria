@@ -12,7 +12,7 @@ function adminSidebar(string $active): void {
   ['financeiro.php','Financeiro','fa-chart-line','financeiro'],
   ['index.php#clientes','Clientes','fa-users','clientes'],
  ];
- echo '<aside class="admin-sidebar"><a class="admin-brand" href="index.php"><img src="../img/Logo.png" alt="MS"><div><strong>MS STUDIO</strong><div class="muted" style="font-size:.7rem">Painel de gestão</div></div></a>';
+ echo '<aside class="admin-sidebar"><a class="admin-brand" href="index.php"><span class="ms-emblem"><img src="../img/Logo.png" alt="Símbolo do leão MS"></span><div><strong>MS STUDIO</strong><div class="muted" style="font-size:.7rem">Painel de gestão</div></div></a>';
  echo '<div class="admin-sidebar-label">MENU PRINCIPAL</div><nav class="admin-nav" aria-label="Menu administrativo">';
  foreach($links as [$href,$label,$icon,$id]){
    echo '<a href="'.msEscape($href).'" class="'.($active===$id?'active':'').'"><i class="fa-solid '.msEscape($icon).'"></i>'.msEscape($label).'</a>';

@@ -19,9 +19,9 @@ function msValidatedMoney(mixed $value): ?string {
 }
 function msShopCounts(PDO $pdo): array {
     return [
-        'produtos' => (int)$pdo->query('SELECT COUNT(*) FROM ms_produtos WHERE ativo = 1')->fetchColumn(),
+        "produtos" => (int)$pdo->query("SELECT COUNT(*) FROM ms_produtos WHERE ativo=1 AND estoque>0 AND categoria NOT LIKE '% · DEMO'")->fetchColumn(),
         'pedidos_pendentes' => (int)$pdo->query("SELECT COUNT(*) FROM ms_pedidos WHERE status='pendente'")->fetchColumn(),
-        'estoque_baixo' => (int)$pdo->query('SELECT COUNT(*) FROM ms_produtos WHERE ativo=1 AND estoque<=3')->fetchColumn(),
+        "estoque_baixo" => (int)$pdo->query("SELECT COUNT(*) FROM ms_produtos WHERE ativo=1 AND estoque<=3 AND categoria NOT LIKE '% · DEMO'")->fetchColumn(),
     ];
 }
 function msReport(PDO $pdo, DateTimeImmutable $from, DateTimeImmutable $to): array {

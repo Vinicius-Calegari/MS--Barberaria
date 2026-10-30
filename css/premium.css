@@ -61,3 +61,43 @@ html{scroll-padding-top:84px}body{overflow-x:hidden}button,input,select,textarea
  .store-page .nav-mobile-toggle{width:38px;height:40px;flex-shrink:0}
  .store-page .nav-actions .btn-ms.primary{padding:0 9px;font-size:.7rem;min-height:40px}
 }
+
+/* Brand lockup shared by storefront, booking and MS Studio. Original lion preserved. */
+.ms-nav .ms-brand .ms-emblem,.dash-top .ms-brand .ms-emblem,.admin-brand .ms-emblem{--emblem-size:48px;border-radius:13px}
+.ms-nav .ms-brand .ms-emblem img,.dash-top .ms-brand .ms-emblem img,.admin-brand .ms-emblem img{width:76%!important;height:76%!important}
+.ms-nav .ms-brand strong,.dash-top .ms-brand strong{letter-spacing:.058em;color:#fff3df;font-size:1.55rem}
+.ms-nav .ms-brand span:not(.ms-emblem),.dash-top .ms-brand span:not(.ms-emblem){color:#bfa988}
+.admin-brand .ms-emblem{--emblem-size:45px}
+@media(max-width:650px){.ms-nav .ms-brand .ms-emblem{--emblem-size:38px}.ms-nav .ms-brand strong{font-size:1.17rem}}
+
+/* Distinctive premium badge preserving the original MS lion */
+.ms-emblem{--emblem-size:49px;width:var(--emblem-size);height:var(--emblem-size);display:inline-grid;place-items:center;position:relative;flex:none;isolation:isolate;overflow:hidden;
+ border-radius:14px;border:1px solid #9b7447;background:radial-gradient(circle at 30% 25%,#332922,#0c0d0e 68%);
+ box-shadow:inset 0 0 0 3px #0d0e10,inset 0 0 0 4px rgba(236,193,123,.25),0 9px 24px rgba(0,0,0,.35),0 0 35px rgba(173,122,62,.12)}
+.ms-emblem:before{content:'';position:absolute;inset:5px;border-radius:9px;border:1px solid rgba(240,199,133,.18);pointer-events:none;z-index:1}
+.ms-emblem img{width:75%!important;height:75%!important;object-fit:contain!important;filter:invert(1) sepia(1) saturate(.42) hue-rotate(346deg) brightness(1.15);mix-blend-mode:screen;position:relative;z-index:2;transform:scale(1.03)}
+.ms-emblem.emblem-large{--emblem-size:66px;border-radius:18px}
+\n
+/* CONCEPT LOOKBOOK · illustrative examples, never purchasable until real stock exists */
+.demo-alert{display:flex;align-items:flex-start;gap:14px;margin:0 0 39px;padding:17px 20px;border:1px solid rgba(223,175,103,.3);border-radius:15px;color:#c3b9ac;background:linear-gradient(110deg,rgba(202,148,67,.10),rgba(161,31,40,.045));font-size:.81rem;line-height:1.65}
+.demo-alert i{color:var(--gold-2);margin-top:4px;font-size:1.1rem}.demo-alert strong{color:#f2d3a4}
+.shop-tag.demo-tag{background:rgba(13,12,14,.88);border:1px solid rgba(232,190,126,.46);color:#f5d8a7;backdrop-filter:blur(14px);font-size:.6rem;letter-spacing:.075em}
+.shop-photo.sample-product{background:#151416}
+.apparel-scene{position:relative;height:100%;display:flex;align-items:center;justify-content:center;isolation:isolate;overflow:hidden;background:radial-gradient(ellipse at 55% 40%,#332e30,#141417 69%,#0c0c0e)}
+.apparel-scene:before{content:"";position:absolute;inset:0;opacity:.36;pointer-events:none;background:linear-gradient(145deg,rgba(244,208,151,.09),transparent 53%,rgba(0,0,0,.22))}
+.apparel-scene.apparel-shirt{--apparel:#25262b;--apparel-border:#6e6a67;--apparel-mark:#c4aa7d;background:radial-gradient(ellipse at 50% 32%,#45403c,#1a181a 63%,#111015)}
+.apparel-scene.apparel-hoodie{--apparel:#292327;--apparel-border:#665358;--apparel-mark:#ddbf8c;background:radial-gradient(ellipse at 50% 30%,#3b2429,#191316 65%,#0b0c0d)}
+.apparel-scene.apparel-cap{--apparel:#201b20;--apparel-border:#735855;--apparel-mark:#efbc79;background:radial-gradient(ellipse at 50% 30%,#4c353a,#1a1518 65%,#100e10)}
+.apparel-scene.apparel-shorts{--apparel:#30313a;--apparel-border:#606575;--apparel-mark:#cebd9a;background:radial-gradient(ellipse at 50% 30%,#383c46,#181a20 65%,#0d0e10)}
+.scene-grid{position:absolute;inset:0;opacity:.2;background-image:linear-gradient(rgba(255,255,255,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.09) 1px,transparent 1px);background-size:40px 40px;mask-image:linear-gradient(transparent,black 70%)}
+.scene-halo{width:235px;height:235px;position:absolute;border-radius:50%;border:1px solid rgba(235,198,145,.24);box-shadow:0 0 0 30px rgba(223,181,111,.03),0 0 0 90px rgba(223,181,111,.02);transform:rotateX(64deg) rotate(-18deg)}
+.fashion-item{width:min(92%,300px);height:90%;position:relative;filter:drop-shadow(0 27px 27px rgba(0,0,0,.62));transform:rotate(-5deg);transition:transform .55s cubic-bezier(.2,.8,.25,1);z-index:2}
+.shop-card:hover .fashion-item{transform:rotate(0deg) translateY(-9px) scale(1.045)}
+.fashion-item .shirt-silhouette{fill:var(--apparel);stroke:var(--apparel-border);stroke-width:5;stroke-linejoin:round}
+.fashion-item text{fill:var(--apparel-mark);font-family:'Bebas Neue',sans-serif;font-size:54px;letter-spacing:.04em}
+.fashion-item text.apparel-sub{font-family:'Archivo',sans-serif;font-size:11px;letter-spacing:.3em}
+.scene-bottom{position:absolute;bottom:17px;left:18px;right:18px;display:flex;justify-content:space-between;gap:8px;color:rgba(234,212,178,.65);font-size:.57rem;letter-spacing:.12em;z-index:4}
+.scene-bottom small{font-size:inherit}
+.concept-price{display:flex;flex-direction:column;gap:2px}.concept-price small{font-size:.65rem;color:#a6a09b}.concept-price strong{font-size:1.15rem;color:var(--gold-2)}
+.shop-buy-row .btn-ms.demo-disabled{font-size:.76rem;color:#a8a19a;border-color:rgba(255,255,255,.12);pointer-events:none;cursor:default;background:#1b1a1c;box-shadow:none}
+@media(max-width:650px){.demo-alert{font-size:.74rem;padding:14px}.shop-photo.sample-product{height:300px}}

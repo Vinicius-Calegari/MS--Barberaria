@@ -36,3 +36,11 @@ A aplicação requer \`DB_HOST\`, \`DB_PORT\`, \`DB_NAME\`, \`DB_USER\`, \`DB_PA
 - Pedidos pendentes não reservam estoque, então a confirmação administrativa exige disponibilidade real.
 - Aiven Free e Render Free podem suspender serviços por inatividade; serviços comerciais que exigem alta disponibilidade precisam de planos com SLA.
 - Para foto adicional/galeria por produto, criar uma tabela de imagens separada futuramente.
+
+## MS Store — dados demonstrativos (2026-10-30)
+- Seed idempotente: \`database/seeds/003_concept_products.sql\`.
+- Oito peças **conceituais**, identificadas por categoria \`· DEMO\`, com **estoque zero**.
+- O catálogo mostra ilustrações vetoriais; **não são fotos de produtos reais**.
+- A compra de peças \`· DEMO\` é bloqueada visualmente e no servidor por estoque zero.
+- Valores são referências fictícias, não ofertas comerciais. Para vender, use **Admin > Produtos e estoque** e atualize categoria (remova \`· DEMO\`), preço, descrição, foto e quantidade de estoque real.
+- As peças conceituais não contam nos KPIs de estoque disponível ou estoque baixo.

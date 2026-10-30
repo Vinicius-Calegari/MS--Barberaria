@@ -86,7 +86,7 @@ $proximo = $meusAgendamentos[0] ?? null;
 <body class="dashboard-page">
 <header class="dash-top">
     <div class="container-ms dash-top-inner">
-        <a class="ms-brand" href="index.php"><img src="img/Logo.png" alt="MS"><div><strong>MS BARBEARIA</strong><span>Área do cliente</span></div></a>
+        <a class="ms-brand" href="index.php"><span class="ms-emblem"><img src="img/Logo.png" alt="Símbolo do leão MS"></span><div><strong>MS BARBEARIA</strong><span>Área do cliente</span></div></a>
         <div class="nav-actions">
             <a class="btn-ms ghost" href="index.php"><i class="fa-solid fa-house"></i> Site</a>
             <form action="logout.php" method="POST"><?= csrfField() ?><button class="btn-ms ghost" type="submit"><i class="fa-solid fa-right-from-bracket"></i> Sair</button></form>

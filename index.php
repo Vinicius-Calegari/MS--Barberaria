@@ -17,7 +17,7 @@ $servicos=require __DIR__.'/config/services.php';
 <div class="ambient-orb orb-one" aria-hidden="true"></div>
 <div class="scroll-progress" aria-hidden="true"></div>
 <header class="ms-nav"><div class="container-ms ms-nav-inner">
-<a class="ms-brand" href="#inicio" aria-label="MS Barbearia: início"><img src="img/Logo.png" alt="MS"><div><strong>MS BARBEARIA</strong><span>Ferros · Minas Gerais</span></div></a>
+<a class="ms-brand" href="#inicio" aria-label="MS Barbearia: início"><span class="ms-emblem"><img src="img/Logo.png" alt="Símbolo do leão MS"></span><div><strong>MS BARBEARIA</strong><span>Ferros · Minas Gerais</span></div></a>
 <button type="button" class="nav-mobile-toggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="ms-site-nav"><i class="fa-solid fa-bars"></i></button>
 <nav class="ms-links" id="ms-site-nav" aria-label="Navegação principal">
 <a href="#servicos">Serviços</a><a href="#experiencia">Experiência</a><a href="produtos.php">MS Store <span class="nav-new">NOVO</span></a><a href="#contato">Contato</a>
