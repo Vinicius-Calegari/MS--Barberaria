@@ -118,3 +118,9 @@ html{scroll-padding-top:84px}body{overflow-x:hidden}button,input,select,textarea
  .store-page .ms-nav .ms-brand strong{font-size:.9rem}
  .store-page .ms-nav .ms-brand .ms-emblem{--emblem-size:29px;width:29px;height:29px;min-width:29px;flex-basis:29px}
 }
+
+/* Re-enable the badge at mobile widths (legacy rework.css hides all .ms-brand spans). */
+@media(max-width:640px){
+ .ms-nav .ms-brand .ms-emblem,.dash-top .ms-brand .ms-emblem,
+ .admin-brand .ms-emblem{display:inline-grid!important}
+}
