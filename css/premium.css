@@ -101,3 +101,20 @@ html{scroll-padding-top:84px}body{overflow-x:hidden}button,input,select,textarea
 .concept-price{display:flex;flex-direction:column;gap:2px}.concept-price small{font-size:.65rem;color:#a6a09b}.concept-price strong{font-size:1.15rem;color:var(--gold-2)}
 .shop-buy-row .btn-ms.demo-disabled{font-size:.76rem;color:#a8a19a;border-color:rgba(255,255,255,.12);pointer-events:none;cursor:default;background:#1b1a1c;box-shadow:none}
 @media(max-width:650px){.demo-alert{font-size:.74rem;padding:14px}.shop-photo.sample-product{height:300px}}
+
+/* Small-screen shop header: never allow the real MS emblem to shrink to zero. */
+@media(max-width:650px){
+ .store-page .ms-nav .ms-brand{flex:0 0 auto;min-width:0;gap:5px}
+ .store-page .ms-nav .ms-brand .ms-emblem{--emblem-size:34px;width:34px;height:34px;min-width:34px;max-width:34px;flex:0 0 34px;border-radius:9px}
+ .store-page .ms-nav .ms-brand strong{font-size:1.04rem;letter-spacing:.025em}
+ .store-page .ms-nav .ms-brand span:not(.ms-emblem){display:none}
+ .store-page .ms-nav-inner{gap:5px}
+ .store-page .nav-actions{gap:5px;flex:0 0 auto}
+ .store-page .nav-mobile-toggle{width:35px;height:38px}
+ .store-page .nav-actions .store-cart-button{width:37px;height:38px;min-height:38px}
+ .store-page .nav-actions .btn-ms.primary{padding:0 8px;font-size:.67rem;min-height:38px}
+}
+@media(max-width:365px){
+ .store-page .ms-nav .ms-brand strong{font-size:.9rem}
+ .store-page .ms-nav .ms-brand .ms-emblem{--emblem-size:29px;width:29px;height:29px;min-width:29px;flex-basis:29px}
+}
