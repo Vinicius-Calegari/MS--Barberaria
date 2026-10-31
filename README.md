@@ -2,6 +2,11 @@
 
 > Sistema web full stack em PHP/MySQL para clientes, agenda, preços e operação administrativa de uma barbearia.
 
+**Aplicação publicada:** https://ms-barbearia.onrender.com  
+**Área administrativa:** https://ms-barbearia.onrender.com/admin/login.php  
+**MS Store:** https://ms-barbearia.onrender.com/produtos.php  
+**Código correspondente à produção:** [branch deploy/render-free-2026](https://github.com/Vinicius-Calegari/MS--Barberaria/tree/deploy/render-free-2026).
+
 ![PHP](https://img.shields.io/badge/PHP-8%2B-777BB4?logo=php&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-PDO-4479A1?logo=mysql&logoColor=white)
 ![CI](https://img.shields.io/github/actions/workflow/status/Vinicius-Calegari/MS--Barberaria/php-quality.yml?label=PHP%20syntax)
@@ -126,7 +131,9 @@ Requisitos: PHP 8+, `pdo_mysql` e MySQL/MariaDB.
 
 ## Produção
 
-O deploy utiliza FrankenPHP em container e MySQL persistente no Railway. Antes de cada deploy, `database/migrate.php` prepara o schema necessário de forma idempotente.
+O deploy **atual** usa **PHP 8.4 + Apache no Render (Docker)**, conectado por TLS ao **MySQL Free do Aiven**. O código em produção está na branch `deploy/render-free-2026`. O sistema mantém as áreas do cliente, administração, MS Store, estoque, pedidos e financeiro.
+
+As migrações do banco são feitas de forma controlada, preservando os dados anteriores; a aplicação no Render não deve recriar ou sobrescrever a base. O Dockerfile e a configuração de produção estão na branch de deploy. A branch `master` conserva o histórico/base original do projeto.
 
 ## Qualidade
 
